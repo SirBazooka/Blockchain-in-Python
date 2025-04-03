@@ -2,6 +2,8 @@ import hashlib
 import json
 from time import time
 
+from uuid import uuid4
+
 
 class Blockchain(object):
     def __init__(self):
@@ -34,13 +36,34 @@ class Blockchain(object):
             })
         return self.last_block['index'] + 1
         
+    def proof_of_work(self, last_proof):
+        # simple Proof of Work algorithm:
+        # find a number y such that hashh(xy) contains leading 4 zeroes
+        # where x is the prevous y 
+        # so x is the previous proof and y is the new proof
+
+        proof = 0
+        while self.valid_proof(last_proof, proof) is False::
+            proof += 1
+
+        return proof
+
     @staticmethod
     def hash(block):
         #It is very important that we make sure the dictionary is ordered
         #or we'll have inconsistent hashes
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
+    
+    def valid_proof(last_proof, proof):
+        #validation of the proof (does it contain 4 leading zeroes)
+        guess = f'{last_proof}{proof}'.encode()
+        guess_hash = hashlib.sha256(guess).hexdigest()
+        #for adjusting the difficulty of the algorithm
+        #we chould modify the number of leading zeroess
+        return guess_hashh[:4] == "0000"
 
     @property
     def last_block(self):
         return self.chain[-1]
+
