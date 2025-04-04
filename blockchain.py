@@ -4,6 +4,8 @@ from time import time
 
 from uuid import uuid4
 
+from textwrap import dedent
+from flask import Flask, jsonify, request
 
 class Blockchain(object):
     def __init__(self):
@@ -37,13 +39,13 @@ class Blockchain(object):
         return self.last_block['index'] + 1
         
     def proof_of_work(self, last_proof):
-        # simple Proof of Work algorithm:
-        # find a number y such that hashh(xy) contains leading 4 zeroes
-        # where x is the prevous y 
-        # so x is the previous proof and y is the new proof
+        #simple Proof of Work algorithm:
+        #find a number y such that hashh(xy) contains leading 4 zeroes
+        #where x is the prevous y 
+        #so x is the previous proof and y is the new proof
 
         proof = 0
-        while self.valid_proof(last_proof, proof) is False::
+        while self.valid_proof(last_proof, proof) is False:
             proof += 1
 
         return proof
@@ -67,3 +69,42 @@ class Blockchain(object):
     def last_block(self):
         return self.chain[-1]
 
+# Flask code
+app = Flask(__name__)
+
+node_identifier = str(uuid4()).replace('-', '')
+
+blockchain = Blockchain()
+
+
+@app.route('/mine', methods=['GET'])
+def mine():
+    return "Mine a new Block"
+  
+@app.route('/transactions/new', methods=['POST'])
+def new_transaction():
+    values = request.get_json()
+
+    #check that the required fields are in the POST
+    required = ['sender', 'recipient', 'amount']
+    if not all (i in values for i in required):
+        return 'missing values', 400
+    
+    #creating a new transaction
+    index = blockchain.new_transaction(value['sender'], values['recipient'], values['amount'])
+    response = {'message' : f'Transactionwill be added to the Block {index}'}
+    return jsonify(response), 201
+
+
+    return "Add a new transaction"
+
+@app.route('/chain', methods=['GET'])
+def full_chain():
+    response = {
+        'chain': blockchain.chain,
+        'length': len(blockchain.chain),
+    }
+    return jsonify(response), 200
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
