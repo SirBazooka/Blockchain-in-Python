@@ -4,14 +4,23 @@ from time import time
 from uuid import uuid4
 from textwrap import dedent
 from flask import Flask, jsonify, request
+from urllib.parse import urlparse 
+import requests
 
 class Blockchain(object):
     def __init__(self):
         self.chain = []
         self.current_transactions = []
+        self.nodes = set()
         
         # Genesis block - a block with no predecessors. 
         self.new_block(previous_hash=1, proof=100)
+
+    #registering a new node
+    #add a new node to the list of the nodes
+    def register_node(self, address):
+       parsed_url = urlparse(address)
+       self.node.add(parsed_url.netloc)
 
     def new_block(self, proof, previous_hash=None):
         block = {
@@ -48,6 +57,58 @@ class Blockchain(object):
 
         return proof
 
+    #used for determining if a note is valid or not 
+    def valid_chain(self, chain):
+        last_block = chain[0]
+        current_index = 1
+
+        while current_index < len(chain):
+            block = chain[current_index]
+            print(f'{last_block}')
+            print(f'{block}')
+            print("\n--------------------\n")
+            #checking if the hash of the block is correct
+            if block['previous_hash'] != self.hash(last_block):
+                return False
+            
+            #checking if the proof of work is correct 
+            if not self.valid_proof(last_block['proof'], block['proof']):
+                return False
+
+            last_block = block
+            currect_index +=1
+
+        return True 
+            
+    def resolve_conflicts(self):
+        #this is the Consensus Algorithm
+        #it resolves conflicts by replacing our chain with the longest one in the network 
+        #returns True if our chan was replaced and False if it was not 
+    
+        neighbours = self.nodes
+        new_chain = None
+
+        max_length = len(self.chain)
+
+        for node in neighbours:
+            response = requests.get(f'http://{node}/chain')
+
+            if response.status_code == 200:
+                length = response.json()['length']
+                chain = response.json()['chain']
+
+                if length > max_length and self.valid_chain(chain):
+                    max_length = length 
+                    new_chain = chain
+
+        #replace the chain if we discovered a new valid chain longer than ours
+        if new_chain:
+            self.chain = new_chain
+            return True
+
+        return False
+        
+
     @staticmethod
     def valid_proof(last_proof, proof):
         # validation of the proof (does it contain 4 leading zeroes)
@@ -68,7 +129,13 @@ class Blockchain(object):
     def last_block(self):
         return self.chain[-1]
 
-# Flask code
+
+
+
+
+
+# Flask server config 
+
 app = Flask(__name__)
 
 node_identifier = str(uuid4()).replace('-', '')
