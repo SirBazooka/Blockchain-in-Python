@@ -87,10 +87,29 @@ This project demonstrates the core concepts of blockchain technology including p
 - Description: Registers new nodes with the network
 - Response: Returns list of all registered nodes
 
-###Consensus
+### Consensus
 - Endpoint: ```GET /nodes/resolve```
 - Description: Resolves blockchain conflicts by choosing the longest valid chain
 - Response: Returns the current chain (either replaced or authoritative)
+
+## Running Multiple Nodes
+To create a decentralized network:
+1. Run multiple instances on different ports:
+   ```bash
+    python blockchain.py -p 5001
+    python blockchain.py -p 5002
+   ```
+2. Register nodes with each other(example with Curl):
+   ```bash
+   curl -X POST -H "Content-Type: application/json" -d '{
+    "nodes": ["http://localhost:5000"]
+    }' "http://localhost:5001/nodes/register"
+    ```
+## Configuration
+- The proof-of-work difficulty can be adjusted by modifying the ```valid_proof``` method
+  (change the numbef of leading zeroes required)
+- Mining reward amount is hardcoded to 1 coin
+  (can be changed in the ```/mine``` endpoint)
 
 ## Dependencies
 - Python 3.x
